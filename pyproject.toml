@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "hugo2wpcom"
+version = "0.1.0"
+description = "Convert Hugo Markdown files to WordPress.com"
+authors = ["Farzad FARID <farzy@farzy.org>"]
+license = "Apache License 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+python-wordpress-xmlrpc = "^2.3"
+markdown = "^3.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
