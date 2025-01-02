@@ -80,13 +80,10 @@ def is_valid_token(client_id, token=None):
 
 
 if __name__ == '__main__':
-    config = read_config()
-
-    session = connect_to_wordpress(config)
-
-    print(f"Session: {session}")
-
     rest_base_url = 'https://public-api.wordpress.com/rest/v1.1'
+
+    config = read_config()
+    session = connect_to_wordpress(config)
 
     r = session.get(f'{rest_base_url}/me')
     print("## /me:")
