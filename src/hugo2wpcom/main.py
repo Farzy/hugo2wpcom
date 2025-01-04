@@ -76,7 +76,6 @@ def connect_to_wordpress(config):
 
     client_id = config['WordPress']['client_id']
     client_secret = config['WordPress']['client_secret']
-    # redirect_uri = config['WordPress']['redirect_uri']
     access_token = config['WordPress'].get('token', None)
     if access_token:
         access_token = base64.b64decode(access_token).decode('utf-8')
