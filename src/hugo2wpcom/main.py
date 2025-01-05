@@ -1,6 +1,10 @@
+
+from __future__ import annotations
 import base64
 import os
 import pprint
+from typing import Union
+from typing import Any
 
 import requests
 from requests_oauthlib import OAuth2Session
@@ -11,17 +15,28 @@ import threading
 from urllib.parse import urlunparse
 
 
-def read_config(filepath="config.ini"):
-    cfg = configparser.ConfigParser()
-    try:
-        cfg.read(filepath)
-        return cfg
-    except configparser.Error as e:
-        print(f"Error reading config file: {e}")
-        return None
+class Config:
+    def __init__(self, filepath: str = "config.ini"):
+        self.filepath = filepath
+        self.cfg = configparser.ConfigParser()
+        self.read_config()
 
+    def read_config(self) -> Union[configparser.ConfigParser, None]:
+        try:
+            self.cfg.read(self.filepath)  # type: ignore[no-untyped-call]
+            return self.cfg
+        except configparser.Error as e:
+            print(f"Error reading config file: {e}")
+            return None
 
-def launch_webserver_and_get_called_url(port):
+    def write_config(self) -> None:
+        try:
+            with open(self.filepath, 'w') as file:
+                self.cfg.write(file)
+        except IOError as e:
+            print(f"Error writing to config file: {e}")
+
+def launch_webserver_and_get_called_url(port: int) -> Union[str, None]:
     """
     Launch a webserver on a random port, listen for a single request,
     and return the full URL that the server was called.
@@ -47,7 +62,7 @@ def launch_webserver_and_get_called_url(port):
             # Stop the server (the thread will terminate)
             threading.Thread(target=self.server.shutdown).start()
 
-    server = socketserver.TCPServer(("127.0.0.1", port), RequestHandler)
+    server: socketserver.TCPServer[Any] = socketserver.TCPServer(("127.0.0.1", port), RequestHandler)
 
     print(f"Server running at http://127.0.0.1:{port}/")
 
@@ -63,22 +78,22 @@ def launch_webserver_and_get_called_url(port):
     return RequestHandler.called_url
 
 
-def find_available_port():
+def find_available_port() -> int:
     # Get an available port
     with socketserver.TCPServer(("127.0.0.1", 0), http.server.SimpleHTTPRequestHandler) as temp_server:
         return temp_server.server_address[1]
 
 
-def connect_to_wordpress(config):
+def connect_to_wordpress(config: Config) -> Union[requests.Session, OAuth2Session]:
     # OAuth2 endpoints for WordPress.com
     authorization_base_url = 'https://public-api.wordpress.com/oauth2/authorize'
     token_url = 'https://public-api.wordpress.com/oauth2/token'
 
-    client_id = config['WordPress']['client_id']
-    client_secret = config['WordPress']['client_secret']
-    access_token = config['WordPress'].get('token', None)
+    client_id = config.cfg['WordPress']['client_id']
+    client_secret = config.cfg['WordPress']['client_secret']
+    access_token = config.cfg['WordPress'].get('token', None)
     if access_token:
-        access_token = base64.b64decode(access_token).decode('utf-8')
+        access_token: str = base64.b64decode(access_token).decode('utf-8')
 
     if is_valid_token(client_id, access_token):
         s = requests.Session()
@@ -92,7 +107,7 @@ def connect_to_wordpress(config):
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
     # Create an OAuth2 session
-    wordpress = OAuth2Session(client_id,
+    wordpress: OAuth2Session = OAuth2Session(client_id,
                               redirect_uri=f"http://localhost:{tcp_port}",
                               scope='global')
     
@@ -114,14 +129,13 @@ def connect_to_wordpress(config):
     print('Connected to WordPress.com successfully!')
     pprint.pprint(token)
 
-    config['WordPress']['token'] = base64.b64encode(bytes(token['access_token'], 'utf-8')).decode('utf-8')
-    with open('config.ini', 'w') as configfile:
-        config.write(configfile)
+    config.cfg['WordPress']['token'] = base64.b64encode(bytes(token['access_token'], 'utf-8')).decode('utf-8')
+    config.write_config()
 
     return wordpress
 
 
-def is_valid_token(client_id, token=None):
+def is_valid_token(client_id: str, token: Union[str, None] = None) -> bool:
     token_info_url = 'https://public-api.wordpress.com/oauth2/token-info'
 
     if token:
@@ -143,7 +157,7 @@ def is_valid_token(client_id, token=None):
 if __name__ == '__main__':
     rest_base_url = 'https://public-api.wordpress.com/rest/v1.1'
 
-    config = read_config()
+    config = Config(filepath='config.ini')
     session = connect_to_wordpress(config)
 
     r = session.get(f'{rest_base_url}/me')
