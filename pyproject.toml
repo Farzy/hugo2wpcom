@@ -12,6 +12,11 @@ python-wordpress-xmlrpc = "^2.3"
 markdown = "^3.7"
 requests-oauthlib = "^2.0.0"
 
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+notebook = "^7.3.2"
 
 [build-system]
 requires = ["poetry-core"]
