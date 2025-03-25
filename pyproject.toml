@@ -1,23 +1,23 @@
-[tool.poetry]
+[project]
 name = "hugo2wpcom"
 version = "0.1.0"
 description = "Convert Hugo Markdown files to WordPress.com"
-authors = ["Farzad FARID <farzy@farzy.org>"]
-license = "Apache License 2.0"
 readme = "README.md"
+authors = [
+    {name = "Farzad FARID", email = "farzy@farzy.org"},
+]
+license = {text = "Apache License 2.0"}
+requires-python = ">=3.13, <4.0"
+dependencies = [
+    "python-wordpress-xmlrpc >=2.3, <3.0",
+    "markdown >=3.7, <4.0",
+    "requests-oauthlib >=2.0.0, <3.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.13"
-python-wordpress-xmlrpc = "^2.3"
-markdown = "^3.7"
-requests-oauthlib = "^2.0.0"
+[dependency-groups]
+test = [
+    "notebook >=7.3.2, <8.0.0",
+]
 
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-notebook = "^7.3.2"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.uv]
+default-groups = []
