@@ -40,11 +40,8 @@ class Config:
         # Ensure the section exists before trying to access it
         # This is important if the config file is empty or sections are missing
         if not self.cfg.has_section(section):
-            # We could raise an error or return a SectionProxy for an empty section
-            # For now, let's stick to configparser's behavior which would error
-            # if trying to access a key from a non-existent section directly.
-            # However, our init ensures Hugo and WordPress sections exist.
-            pass
+            # Raise an error if the section does not exist
+            raise KeyError(f"Section '{section}' does not exist in the configuration.")
         return self.cfg[section]
 
     # __setitem__ for transparent updates
