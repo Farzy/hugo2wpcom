@@ -7,10 +7,13 @@ from hugo2wpcom.html_processor import process_html_images
 
 @pytest.fixture
 def mock_uploader_func(mocker):
-    """Fixture for a mock uploader function."""
+    """Fixture for a mock uploader function that now accepts dry_run."""
     uploader = mocker.MagicMock(name="mock_upload_image_to_wordpress")
-    def side_effect_uploader(session, site_id, image_path, image_name):
-        # Simulate successful upload, return dict with URL
+    # Update signature to include dry_run
+    def side_effect_uploader(session, site_id, image_path, image_name, dry_run=False):
+        # The mock's behavior doesn't need to change based on dry_run for these tests,
+        # as we're testing process_html_images's handling of the uploader's *return value*.
+        # It just needs to accept the argument.
         return {"URL": f"https://{site_id}.files.wordpress.com/uploads/{image_name}_uploaded.jpg"}
     uploader.side_effect = side_effect_uploader
     return uploader
@@ -43,14 +46,16 @@ def test_process_html_images(mocker, mock_uploader_func, html_input, img_src, pa
     # Make os.path.isdir also configurable for the static_path check
     mocker.patch('os.path.isdir', lambda path_arg: path_arg == static_dir if static_dir else False)
 
-
-    processed_html = process_html_images(
+    # process_html_images now returns a tuple (html, count)
+    # and takes a dry_run argument. For existing tests, assume dry_run=False.
+    processed_html, uploaded_count = process_html_images(
         html_input,
         base_dir, # base_dir_for_images
         session_mock,
         site_id,
         static_dir, # hugo_static_path
-        mock_uploader_func
+        mock_uploader_func,
+        dry_run=False # Explicitly pass dry_run
     )
 
     soup = BeautifulSoup(processed_html, 'html.parser')
@@ -60,11 +65,13 @@ def test_process_html_images(mocker, mock_uploader_func, html_input, img_src, pa
     if expect_upload:
         # Verify uploader was called
         mock_uploader_func.assert_called_once()
+        # Check call arguments, now including dry_run (which should be False here)
         args, _ = mock_uploader_func.call_args
-        _session, _site_id, resolved_image_path, image_filename = args
+        _session, _site_id, resolved_image_path, image_filename, _dry_run_arg = args
 
         assert _site_id == site_id
         assert image_filename == os.path.basename(img_src)
+        assert _dry_run_arg is False # Ensure dry_run was passed as False
 
         # Verify resolved path based on type of src
         if img_src.startswith('/'):
@@ -87,15 +94,20 @@ def test_process_html_images(mocker, mock_uploader_func, html_input, img_src, pa
 def test_process_html_images_no_images():
     """Test HTML with no images."""
     html_input = "<p>Some text but no images.</p>"
-    processed_html = process_html_images(html_input, "content", MagicMock(), "site.id", "/static", MagicMock())
+    # Pass dry_run=False, expect 0 images uploaded
+    processed_html, count = process_html_images(html_input, "content", MagicMock(), "site.id", "/static", MagicMock(), dry_run=False)
     assert processed_html == html_input
+    assert count == 0
 
 def test_process_html_empty_and_none_input():
-    assert process_html_images("", "content", MagicMock(), "site.id", "/static", MagicMock()) == ""
-    # Assuming the function is robust to None html_content, though type hints suggest str
-    # If it's not designed for None, this test might need adjustment or the function made more robust.
-    # Based on current implementation: if not html_content: return ""
-    assert process_html_images(None, "content", MagicMock(), "site.id", "/static", MagicMock()) == ""
+    # Pass dry_run=False, expect 0 images uploaded
+    html_empty, count_empty = process_html_images("", "content", MagicMock(), "site.id", "/static", MagicMock(), dry_run=False)
+    assert html_empty == ""
+    assert count_empty == 0
+
+    html_none, count_none = process_html_images(None, "content", MagicMock(), "site.id", "/static", MagicMock(), dry_run=False)
+    assert html_none == ""
+    assert count_none == 0
 
 
 def test_process_html_image_with_srcset_removed(mocker, mock_uploader_func):
@@ -108,13 +120,15 @@ def test_process_html_image_with_srcset_removed(mocker, mock_uploader_func):
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', return_value=True) # Assume static_dir is valid if checked
 
-    processed_html = process_html_images(html_input, base_dir, MagicMock(), site_id, static_dir, mock_uploader_func)
+    # Pass dry_run=False
+    processed_html, count = process_html_images(html_input, base_dir, MagicMock(), site_id, static_dir, mock_uploader_func, dry_run=False)
     soup = BeautifulSoup(processed_html, 'html.parser')
     img_tag = soup.find('img')
 
     assert img_tag is not None
     assert img_tag['src'] == f"https://{site_id}.files.wordpress.com/uploads/local.jpg_uploaded.jpg"
     assert not img_tag.has_attr('srcset') # srcset should be removed
+    assert count == 1 # One image should have been "uploaded"
     mock_uploader_func.assert_called_once()
 
 # Add more tests:
