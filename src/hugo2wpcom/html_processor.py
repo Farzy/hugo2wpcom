@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse # Added import
 from bs4 import BeautifulSoup, Tag
 from typing import Callable, Dict, Any, Optional, Tuple
 
@@ -50,28 +51,37 @@ def process_html_images(
             else: print(f"Skipping external image: {original_src}")
             continue
 
-        full_local_path: Optional[str] = None
-        image_filename = os.path.basename(original_src)
+        # Parse the original_src to remove fragments or query parameters for local path resolution
+        parsed_src = urlparse(original_src)
+        cleaned_src = parsed_src.path # Use only the path component for local file operations
 
-        if original_src.startswith('/'):
+        full_local_path: Optional[str] = None
+        # image_filename should be derived from the cleaned path
+        image_filename = os.path.basename(cleaned_src)
+
+        if cleaned_src.startswith('/'): # Use cleaned_src for path logic
             if static_path and os.path.isdir(static_path):
-                full_local_path = os.path.join(static_path, original_src.lstrip('/'))
+                # Use cleaned_src, remove its leading slash for os.path.join
+                full_local_path = os.path.join(static_path, cleaned_src.lstrip('/'))
             else:
                 msg_prefix = "[DRY RUN] " if dry_run else ""
-                print(f"{msg_prefix}Warning: Image source '{original_src}' is absolute, but static_path ('{static_path}') is not set or not a directory. Skipping.")
+                # Log with original_src to show what was in HTML, but cleaned_src for path issue context
+                print(f"{msg_prefix}Warning: Image source '{original_src}' (cleaned: '{cleaned_src}') is absolute, but static_path ('{static_path}') is not set or not a directory. Skipping.")
                 continue
         else:
-            full_local_path = os.path.abspath(os.path.join(base_dir_for_images, original_src))
+            # Use cleaned_src for resolving relative paths
+            full_local_path = os.path.abspath(os.path.join(base_dir_for_images, cleaned_src))
 
         if full_local_path and os.path.exists(full_local_path):
             if dry_run:
-                print(f"[DRY RUN] Found local image: {original_src} -> Resolved to: {full_local_path}")
+                print(f"[DRY RUN] Found local image: {original_src} (resolved from '{cleaned_src}') -> Full path: {full_local_path}")
             else:
-                print(f"Found local image: {original_src} -> Resolved to: {full_local_path}")
+                print(f"Found local image: {original_src} (resolved from '{cleaned_src}') -> Full path: {full_local_path}")
 
-            upload_response = uploader_func(session, site_id, full_local_path, image_filename, dry_run) # Pass dry_run
+            # image_filename (derived from cleaned_src) is passed to uploader
+            upload_response = uploader_func(session, site_id, full_local_path, image_filename, dry_run)
 
-            if upload_response and upload_response.get('URL'): # Check .get('URL') for safety
+            if upload_response and upload_response.get('URL'):
                 new_url = upload_response['URL']
                 print(f"  {'[DRY RUN] ' if dry_run else ''}Image processed. New URL: {new_url}")
                 img_tag['src'] = new_url

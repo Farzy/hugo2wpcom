@@ -1,7 +1,8 @@
 import pytest
 import os
 from unittest.mock import MagicMock
-from bs4 import BeautifulSoup # For constructing expected output if needed, or verifying structure
+from urllib.parse import urlparse # Import urlparse for test adjustments
+from bs4 import BeautifulSoup
 
 from hugo2wpcom.html_processor import process_html_images
 
@@ -34,10 +35,17 @@ HTML_WITH_IMAGES_CASES = [
     ("<p><img src=\"/img/static_image_no_static_path.gif\" alt=\"No Static Path\"></p>", "/img/static_image_no_static_path.gif", False, "content/posts", None, False), # os.path.exists effectively false
     # 7. Image with leading slash, static_path is not a directory
     ("<p><img src=\"/img/static_image_static_not_dir.gif\" alt=\"Static Not Dir\"></p>", "/img/static_image_static_not_dir.gif", False, "content/posts", "/path/to/static/file.txt", False), # os.path.isdir for static_path returns False
+    # 8. Relative image path with a fragment
+    ("<p><img src=\"image1.jpg#section1\" alt=\"Image with fragment\"></p>", "image1.jpg#section1", True, "content/posts", "/path/to/static", True),
+    # 9. Absolute image path with a fragment
+    ("<p><img src=\"/img/static_image.gif#header\" alt=\"Static with fragment\"></p>", "/img/static_image.gif#header", True, "content/posts", "/path/to/hugo/static", True),
+    # 10. Relative image path with query parameters (should also be stripped by .path)
+    ("<p><img src=\"image_query.png?v=123\" alt=\"Image with query\"></p>", "image_query.png?v=123", True, "content/posts", "/path/to/static", True),
+
 ]
 
-@pytest.mark.parametrize("html_input, img_src, path_exists_val, base_dir, static_dir, expect_upload", HTML_WITH_IMAGES_CASES)
-def test_process_html_images(mocker, mock_uploader_func, html_input, img_src, path_exists_val, base_dir, static_dir, expect_upload):
+@pytest.mark.parametrize("html_input, original_img_src_in_html, path_exists_val, base_dir, static_dir, expect_upload", HTML_WITH_IMAGES_CASES)
+def test_process_html_images(mocker, mock_uploader_func, html_input, original_img_src_in_html, path_exists_val, base_dir, static_dir, expect_upload):
     site_id = "example.com"
     session_mock = MagicMock() # Mock session, not strictly used by uploader mock but passed
 
@@ -67,28 +75,33 @@ def test_process_html_images(mocker, mock_uploader_func, html_input, img_src, pa
         mock_uploader_func.assert_called_once()
         # Check call arguments, now including dry_run (which should be False here)
         args, _ = mock_uploader_func.call_args
-        _session, _site_id, resolved_image_path, image_filename, _dry_run_arg = args
+        _session, _site_id, resolved_image_path, image_filename_for_upload, _dry_run_arg = args
+
+        cleaned_path_from_original_src = urlparse(original_img_src_in_html).path
 
         assert _site_id == site_id
-        assert image_filename == os.path.basename(img_src)
+        assert image_filename_for_upload == os.path.basename(cleaned_path_from_original_src)
         assert _dry_run_arg is False # Ensure dry_run was passed as False
 
-        # Verify resolved path based on type of src
-        if img_src.startswith('/'):
-            assert resolved_image_path == os.path.join(static_dir, img_src.lstrip('/'))
+        # Verify resolved path based on the cleaned version of original_img_src_in_html
+        if cleaned_path_from_original_src.startswith('/'):
+            assert resolved_image_path == os.path.join(static_dir, cleaned_path_from_original_src.lstrip('/'))
         else:
-            assert resolved_image_path == os.path.abspath(os.path.join(base_dir, img_src))
+            assert resolved_image_path == os.path.abspath(os.path.join(base_dir, cleaned_path_from_original_src))
 
-        # Verify src attribute was updated
-        expected_new_src = f"https://{site_id}.files.wordpress.com/uploads/{os.path.basename(img_src)}_uploaded.jpg"
+        # Verify src attribute was updated in the HTML output
+        # The new URL should be based on the basename of the cleaned path
+        expected_new_src = f"https://{site_id}.files.wordpress.com/uploads/{os.path.basename(cleaned_path_from_original_src)}_uploaded.jpg"
         assert img_tag['src'] == expected_new_src
     else:
-        # Verify uploader was NOT called (or called if path_exists but upload failed - though mock always succeeds)
-        if img_src.startswith("http") or not path_exists_val or \
-           (img_src.startswith("/") and (not static_dir or not os.path.isdir(static_dir))):
+        # Verify uploader was NOT called
+        # Conditions for not calling: external, path doesn't exist, or absolute path with invalid static_dir
+        if original_img_src_in_html.startswith("http") or \
+           not path_exists_val or \
+           (original_img_src_in_html.startswith("/") and (not static_dir or not os.path.isdir(static_dir))):
             mock_uploader_func.assert_not_called()
-            assert img_tag['src'] == img_src # Src should remain original
-        # (If we had a case for path_exists_val=True but uploader fails, we'd test that too)
+            assert img_tag['src'] == original_img_src_in_html # Src should remain original
+        # (If we had a case for path_exists_val=True but uploader fails, this part might need adjustment)
 
 
 def test_process_html_images_no_images():
