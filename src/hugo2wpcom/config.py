@@ -7,7 +7,17 @@ from typing import Union
 class Config:
     def __init__(self, filepath: str = "config.ini"):
         self.filepath = filepath
-        self.cfg = configparser.ConfigParser()
+        defaults = {
+            'default_post_status': 'draft',
+            'default_post_category': 'Imported',
+            'default_post_tags': 'hugo, import',
+        }
+        self.cfg = configparser.ConfigParser(defaults=defaults)
+        # Ensure 'Hugo' and 'WordPress' sections exist for default access
+        if 'Hugo' not in self.cfg:
+            self.cfg.add_section('Hugo')
+        if 'WordPress' not in self.cfg:
+            self.cfg.add_section('WordPress')
         self.read_config()
 
     def read_config(self) -> Union[configparser.ConfigParser, None]:
@@ -27,6 +37,14 @@ class Config:
 
     # __getitem__ for transparent access
     def __getitem__(self, section: str) -> Union[configparser.SectionProxy, None]:
+        # Ensure the section exists before trying to access it
+        # This is important if the config file is empty or sections are missing
+        if not self.cfg.has_section(section):
+            # We could raise an error or return a SectionProxy for an empty section
+            # For now, let's stick to configparser's behavior which would error
+            # if trying to access a key from a non-existent section directly.
+            # However, our init ensures Hugo and WordPress sections exist.
+            pass
         return self.cfg[section]
 
     # __setitem__ for transparent updates
