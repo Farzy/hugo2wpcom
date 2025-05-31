@@ -1,5 +1,6 @@
 import os
 import requests
+from urllib.parse import quote # Added import
 from typing import Dict, Any, Optional
 
 def upload_image_to_wordpress(
@@ -42,14 +43,18 @@ def upload_image_to_wordpress(
 
     media_upload_url = f"https://public-api.wordpress.com/rest/v1.1/sites/{site_id}/media/new"
 
-    files = None
-    try:
-        with open(image_path, 'rb') as f:
-            files = {'media[]': (image_name, f.read())} # Read content for requests
+    # URL-encode the image_name for use in the Content-Disposition header filename part
+    quoted_filename_for_header = quote(image_name)
 
-        print(f"Uploading image '{image_name}' from '{image_path}' to WordPress site '{site_id}'...")
-        response = session.post(media_upload_url, files=files)
-        response.raise_for_status()  # Raises HTTPError for bad responses (4XX or 5XX)
+    try:
+        with open(image_path, 'rb') as f_obj: # Use f_obj to avoid conflict if 'files' was a var
+            # The filename in the tuple for files dict is used in Content-Disposition
+            files_payload = {'media[]': (quoted_filename_for_header, f_obj.read())}
+
+        # Log with original and quoted name for clarity if needed, but keeping it concise for now
+        print(f"Uploading image '{image_name}' (as '{quoted_filename_for_header}') from '{image_path}' to WordPress site '{site_id}'...")
+        response = session.post(media_upload_url, files=files_payload)
+        response.raise_for_status()
         response_json = response.json()
 
         if response_json and 'media' in response_json and len(response_json['media']) > 0:

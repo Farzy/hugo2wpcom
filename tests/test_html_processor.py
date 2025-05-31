@@ -1,7 +1,7 @@
 import pytest
 import os
 from unittest.mock import MagicMock
-from urllib.parse import urlparse # Import urlparse for test adjustments
+from urllib.parse import urlparse, quote # Import urlparse and quote for test adjustments
 from bs4 import BeautifulSoup
 
 from hugo2wpcom.html_processor import process_html_images
@@ -10,12 +10,10 @@ from hugo2wpcom.html_processor import process_html_images
 def mock_uploader_func(mocker):
     """Fixture for a mock uploader function that now accepts dry_run."""
     uploader = mocker.MagicMock(name="mock_upload_image_to_wordpress")
-    # Update signature to include dry_run
     def side_effect_uploader(session, site_id, image_path, image_name, dry_run=False):
-        # The mock's behavior doesn't need to change based on dry_run for these tests,
-        # as we're testing process_html_images's handling of the uploader's *return value*.
-        # It just needs to accept the argument.
-        return {"URL": f"https://{site_id}.files.wordpress.com/uploads/{image_name}_uploaded.jpg"}
+        # Simulate WordPress returning a URL where the filename part is URL-encoded
+        # Added "_mock_uploaded.jpg" to distinguish if needed from older mock formats.
+        return {"URL": f"https://{site_id}.files.wordpress.com/uploads/{quote(image_name)}_mock_uploaded.jpg"}
     uploader.side_effect = side_effect_uploader
     return uploader
 
@@ -41,7 +39,14 @@ HTML_WITH_IMAGES_CASES = [
     ("<p><img src=\"/img/static_image.gif#header\" alt=\"Static with fragment\"></p>", "/img/static_image.gif#header", True, "content/posts", "/path/to/hugo/static", True),
     # 10. Relative image path with query parameters (should also be stripped by .path)
     ("<p><img src=\"image_query.png?v=123\" alt=\"Image with query\"></p>", "image_query.png?v=123", True, "content/posts", "/path/to/static", True),
-
+    # 11. Relative path with literal space
+    ("<p><img src=\"image with space.jpg\" alt=\"Rel space\"></p>", "image with space.jpg", True, "content/posts", "/path/to/static", True),
+    # 12. Relative path with URL-encoded space
+    ("<p><img src=\"image%20with%20space.jpg\" alt=\"Rel encoded space\"></p>", "image%20with%20space.jpg", True, "content/posts", "/path/to/static", True),
+    # 13. Static-relative path with literal space
+    ("<p><img src=\"/img/static image with space.png\" alt=\"Static space\"></p>", "/img/static image with space.png", True, "content/posts", "/path/to/hugo/static", True),
+    # 14. Static-relative path with URL-encoded space
+    ("<p><img src=\"/img/static%20image%20with%20space.png\" alt=\"Static encoded space\"></p>", "/img/static%20image%20with%20space.png", True, "content/posts", "/path/to/hugo/static", True),
 ]
 
 @pytest.mark.parametrize("html_input, original_img_src_in_html, path_exists_val, base_dir, static_dir, expect_upload", HTML_WITH_IMAGES_CASES)
@@ -90,8 +95,8 @@ def test_process_html_images(mocker, mock_uploader_func, html_input, original_im
             assert resolved_image_path == os.path.abspath(os.path.join(base_dir, cleaned_path_from_original_src))
 
         # Verify src attribute was updated in the HTML output
-        # The new URL should be based on the basename of the cleaned path
-        expected_new_src = f"https://{site_id}.files.wordpress.com/uploads/{os.path.basename(cleaned_path_from_original_src)}_uploaded.jpg"
+        # The mock uploader now returns a URL-encoded name.
+        expected_new_src = f"https://{site_id}.files.wordpress.com/uploads/{quote(os.path.basename(cleaned_path_from_original_src))}_mock_uploaded.jpg"
         assert img_tag['src'] == expected_new_src
     else:
         # Verify uploader was NOT called
@@ -139,7 +144,8 @@ def test_process_html_image_with_srcset_removed(mocker, mock_uploader_func):
     img_tag = soup.find('img')
 
     assert img_tag is not None
-    assert img_tag['src'] == f"https://{site_id}.files.wordpress.com/uploads/local.jpg_uploaded.jpg"
+    # Expect URL-encoded name from the updated mock uploader
+    assert img_tag['src'] == f"https://{site_id}.files.wordpress.com/uploads/{quote('local.jpg')}_mock_uploaded.jpg"
     assert not img_tag.has_attr('srcset') # srcset should be removed
     assert count == 1 # One image should have been "uploaded"
     mock_uploader_func.assert_called_once()
