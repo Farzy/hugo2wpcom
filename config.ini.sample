@@ -1,3 +1,20 @@
-[Wordpress]
+[WordPress]
+# Existing WordPress.com OAuth app credentials
 client_id = 1234
 client_secret = 4567
+
+# New WordPress specific fields:
+# Your WordPress site ID or domain (e.g., yourgroovydomain.wordpress.com or 123456789)
+wordpress_site_id = your_wordpress_site_id_or_domain
+# Default status for new posts (e.g., draft, publish, pending)
+default_post_status = draft
+# Default category for imported posts
+default_post_category = Imported
+# Default tags for imported posts (comma-separated)
+default_post_tags = hugo, import
+
+[Hugo]
+# Path to your Hugo project's content directory (e.g., /path/to/your/hugo/content)
+hugo_content_path = /path/to/your/hugo/content
+# Path to your Hugo project's static directory (e.g., /path/to/your/hugo/static)
+hugo_static_path = /path/to/your/hugo/static
