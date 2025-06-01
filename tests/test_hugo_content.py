@@ -3,7 +3,7 @@ import os
 from unittest.mock import mock_open, patch, MagicMock # For older style patch if needed
 import frontmatter # To mock its methods
 
-from hugo2wpcom.hugo_content import parse_hugo_file, scan_hugo_content_path, HugoPost
+from src.hugo2wpcom.hugo_content import parse_hugo_file, scan_hugo_content_path
 
 @pytest.fixture
 def mock_frontmatter_post():
@@ -77,7 +77,7 @@ def test_scan_hugo_content_path_valid_path(mocker, mock_frontmatter_post):
         current_post_mock['filepath'] = filepath_arg
         return current_post_mock
 
-    m_parse_hugo_file = mocker.patch('hugo2wpcom.hugo_content.parse_hugo_file', side_effect=side_effect_parse_hugo_file)
+    m_parse_hugo_file = mocker.patch('src.hugo2wpcom.hugo_content.parse_hugo_file', side_effect=side_effect_parse_hugo_file)
 
     results = scan_hugo_content_path(content_path)
 
@@ -94,7 +94,7 @@ def test_scan_hugo_content_path_empty_dir(mocker):
     mocker.patch('os.walk', return_value=[(content_path, [], [])]) # Empty dir
     mocker.patch('os.path.exists', return_value=True)
     mocker.patch('os.path.isdir', return_value=True)
-    m_parse_hugo_file = mocker.patch('hugo2wpcom.hugo_content.parse_hugo_file')
+    m_parse_hugo_file = mocker.patch('src.hugo2wpcom.hugo_content.parse_hugo_file')
 
     results = scan_hugo_content_path(content_path)
 
@@ -129,7 +129,7 @@ def test_scan_hugo_content_path_parse_returns_none(mocker):
         if "good" in filepath:
             return {'metadata': {}, 'content': '', 'filepath': filepath}
         return None # Simulate parsing error for bad.md
-    mocker.patch('hugo2wpcom.hugo_content.parse_hugo_file', side_effect=side_effect_parse)
+    mocker.patch('src.hugo2wpcom.hugo_content.parse_hugo_file', side_effect=side_effect_parse)
 
     results = scan_hugo_content_path(content_path)
     assert len(results) == 1
