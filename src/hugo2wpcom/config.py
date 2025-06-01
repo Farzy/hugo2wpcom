@@ -44,11 +44,11 @@ class Config:
             # For now, let's stick to configparser's behavior which would error
             # if trying to access a key from a non-existent section directly.
             # However, our init ensures Hugo and WordPress sections exist.
-            pass
+            raise KeyError(f"Section '{section}' does not exist in the configuration.")
         return self.cfg[section]
 
     # __setitem__ for transparent updates
     def __setitem__(self, section: str, values: dict) -> None:
         if not isinstance(values, dict):
-            raise ValueError("Values must be a dictionary.")
+            raise ValueError(f"Config: Values must be a dictionary, received {type(values)} instead.")
         self.cfg[section] = values
