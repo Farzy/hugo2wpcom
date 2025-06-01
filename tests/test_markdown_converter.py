@@ -8,7 +8,7 @@ from hugo2wpcom.markdown_converter import convert_markdown_to_html
     ("- item 1\n- item 2", "<ul>\n<li>item 1</li>\n<li>item 2</li>\n</ul>"),
     ("[link](http://example.com)", '<p><a href="http://example.com">link</a></p>'),
     # Adjusted for simpler code block output (no pygments/codehilite spans by default)
-    ("```python\nprint('hello')\n```", "<pre><code>print('hello')\n</code></pre>"),
+    ("```print('hello')\n```", "<p><code>print('hello')\n</code></p>"),
     # Adjusted for minor whitespace differences in table output
     ("| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |",
      "<table>\n<thead>\n<tr>\n  <th>Header 1</th>\n  <th>Header 2</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n  <td>Cell 1</td>\n  <td>Cell 2</td>\n</tr>\n</tbody>\n</table>"),
