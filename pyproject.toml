@@ -9,14 +9,19 @@ authors = [
 license = {text = "Apache License 2.0"}
 requires-python = ">=3.13, <4.0"
 dependencies = [
-    "python-wordpress-xmlrpc >=2.3, <3.0",
-    "markdown >=3.7, <4.0",
-    "requests-oauthlib >=2.0.0, <3.0.0",
+    "requests-oauthlib>=2.0.0,<3.0.0",
+    "requests>=2.32.3",
+    "python-frontmatter>=1.1.0",
+    "markdown2>=2.5.3",
+    "beautifulsoup4>=4.13.3",
+    "python-dateutil>=2.9.0.post0",
 ]
 
 [dependency-groups]
 test = [
     "notebook >=7.3.2, <8.0.0",
+    "pytest>=8.3.5",
+    "pytest-mock>=3.14.1",
 ]
 
 [tool.uv]
