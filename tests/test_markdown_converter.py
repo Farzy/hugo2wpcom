@@ -1,5 +1,5 @@
 import pytest
-from hugo2wpcom.markdown_converter import convert_markdown_to_html
+from src.hugo2wpcom.markdown_converter import convert_markdown_to_html
 
 @pytest.mark.parametrize("markdown_input, expected_html_part", [
     ("## Hello World", '<h2 id="hello-world">Hello World</h2>'), # Adjusted for header-ids

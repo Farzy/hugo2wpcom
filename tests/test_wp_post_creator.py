@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import requests # For requests.exceptions
 
-from hugo2wpcom.wp_post_creator import create_wordpress_post
+from src.hugo2wpcom.wp_post_creator import create_wordpress_post
 
 @pytest.fixture
 def mock_session(mocker):

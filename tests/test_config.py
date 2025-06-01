@@ -1,6 +1,5 @@
 import pytest
-import io
-from hugo2wpcom.config import Config # Assuming Config is in this path
+from src.hugo2wpcom.config import Config # Assuming Config is in this path
 
 # Sample config.ini content as a string
 SAMPLE_CONFIG_INI_CONTENT = """

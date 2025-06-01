@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from urllib.parse import urlparse, quote # Import urlparse and quote for test adjustments
 from bs4 import BeautifulSoup
 
-from hugo2wpcom.html_processor import process_html_images
+from src.hugo2wpcom.html_processor import process_html_images
 
 @pytest.fixture
 def mock_uploader_func(mocker):
@@ -42,11 +42,11 @@ HTML_WITH_IMAGES_CASES = [
     # 11. Relative path with literal space
     ("<p><img src=\"image with space.jpg\" alt=\"Rel space\"></p>", "image with space.jpg", True, "content/posts", "/path/to/static", True),
     # 12. Relative path with URL-encoded space
-    ("<p><img src=\"image%20with%20space.jpg\" alt=\"Rel encoded space\"></p>", "image%20with%20space.jpg", True, "content/posts", "/path/to/static", True),
+    ("<p><img src=\"image%20with%20space.jpg\" alt=\"Rel encoded space\"></p>", "image with space.jpg", True, "content/posts", "/path/to/static", True),
     # 13. Static-relative path with literal space
     ("<p><img src=\"/img/static image with space.png\" alt=\"Static space\"></p>", "/img/static image with space.png", True, "content/posts", "/path/to/hugo/static", True),
     # 14. Static-relative path with URL-encoded space
-    ("<p><img src=\"/img/static%20image%20with%20space.png\" alt=\"Static encoded space\"></p>", "/img/static%20image%20with%20space.png", True, "content/posts", "/path/to/hugo/static", True),
+    ("<p><img src=\"/img/static%20image%20with%20space.png\" alt=\"Static encoded space\"></p>", "/img/static image with space.png", True, "content/posts", "/path/to/hugo/static", True),
 ]
 
 @pytest.mark.parametrize("html_input, original_img_src_in_html, path_exists_val, base_dir, static_dir, expect_upload", HTML_WITH_IMAGES_CASES)

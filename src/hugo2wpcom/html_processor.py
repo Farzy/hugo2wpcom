@@ -1,5 +1,5 @@
 import os
-from urllib.parse import urlparse # Added import
+from urllib.parse import urlparse, unquote # Added import
 from bs4 import BeautifulSoup, Tag
 from typing import Callable, Dict, Any, Optional, Tuple
 
@@ -53,7 +53,7 @@ def process_html_images(
 
         # Parse the original_src to remove fragments or query parameters for local path resolution
         parsed_src = urlparse(original_src)
-        cleaned_src = parsed_src.path # Use only the path component for local file operations
+        cleaned_src = unquote(parsed_src.path) # Use only the path component for local file operations and replace '%20' with ' '
 
         full_local_path: Optional[str] = None
         # image_filename should be derived from the cleaned path
