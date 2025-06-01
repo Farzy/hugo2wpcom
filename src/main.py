@@ -1,11 +1,11 @@
 import os
 import argparse # For --dry-run
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 from dateutil import parser as dateutil_parser
 
 from src.hugo2wpcom.config import Config
-from src.hugo2wpcom.hugo_content import scan_hugo_content_path, HugoPost
+from src.hugo2wpcom.hugo_content import scan_hugo_content_path
 from src.hugo2wpcom.markdown_converter import convert_markdown_to_html
 from src.hugo2wpcom.html_processor import process_html_images
 from src.hugo2wpcom.wp_media_uploader import upload_image_to_wordpress
@@ -200,7 +200,7 @@ def main():
         for f_path in failed_post_files:
             print(f"  - {f_path}")
     else:
-        if len(all_hugo_posts) > 0 and successfully_created_posts_count == len(all_hugo_posts):
+        if 0 < len(all_hugo_posts) == successfully_created_posts_count:
             print("All posts processed successfully!")
         elif len(all_hugo_posts) == 0:
             print("No posts were processed.")
