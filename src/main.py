@@ -4,13 +4,13 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from dateutil import parser as dateutil_parser
 
-from hugo2wpcom.config import Config
-from hugo2wpcom.hugo_content import scan_hugo_content_path, HugoPost
-from hugo2wpcom.markdown_converter import convert_markdown_to_html
-from hugo2wpcom.html_processor import process_html_images
-from hugo2wpcom.wp_media_uploader import upload_image_to_wordpress
-from hugo2wpcom.wp_post_creator import create_wordpress_post
-from hugo2wpcom.wp_auth import connect_to_wordpress
+from src.hugo2wpcom.config import Config
+from src.hugo2wpcom.hugo_content import scan_hugo_content_path, HugoPost
+from src.hugo2wpcom.markdown_converter import convert_markdown_to_html
+from src.hugo2wpcom.html_processor import process_html_images
+from src.hugo2wpcom.wp_media_uploader import upload_image_to_wordpress
+from src.hugo2wpcom.wp_post_creator import create_wordpress_post
+from src.hugo2wpcom.wp_auth import connect_to_wordpress
 
 def main():
     parser = argparse.ArgumentParser(description="Import Hugo content to WordPress.com.")
