@@ -65,6 +65,60 @@ default_post_category = Imported From Hugo, Old Blog
 default_post_tags = hugo, import, web
 ```
 
+## Tests
+
+Run tests with `PYTHONPATH=src pytest -v`.
+
+The command breakdown:
+- `PYTHONPATH=src`: Sets the Python path to include the source directory
+- `pytest`: The test runner command
+- `-v`: Verbose output, showing each test case
+
+### Additional Testing Options
+
+1. Run tests with coverage report:
+   ```bash
+   PYTHONPATH=src pytest --cov=src -v
+   ```
+
+2. Run specific test file:
+   ```bash
+   PYTHONPATH=src pytest tests/test_specific_file.py -v
+   ```
+
+3. Run tests matching a specific pattern:
+   ```bash
+   PYTHONPATH=src pytest -v -k "test_pattern"
+   ```
+
+4. Show test output in real-time:
+   ```bash
+   PYTHONPATH=src pytest -v -s
+   ```
+
+### Writing New Tests
+
+When adding new tests:
+1. Place test files in the `tests` directory
+2. Name test files with the prefix `test_`
+3. Name test functions with the prefix `test_`
+4. Use appropriate pytest fixtures where needed
+5. Follow the existing test structure and patterns
+
+### Troubleshooting Common Test Issues
+
+1. If you get import errors, verify that:
+   - You're running the tests from the project root directory
+   - You've set `PYTHONPATH=src` correctly
+   - All required dependencies are installed
+
+2. If specific tests fail:
+   - Check the test output for detailed error messages
+   - Verify that your configuration files are set up correctly
+   - Ensure all required external services are accessible if needed
+
+For more detailed information about testing specific components, refer to the documentation in individual test files.
+
 ## Usage
 
 1.  **Set up Environment:**
