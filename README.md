@@ -122,8 +122,8 @@ For more detailed information about testing specific components, refer to the do
 ## Usage
 
 1.  **Set up Environment:**
-    *   It's recommended to use a virtual environment (e.g., with `venv` or `Poetry`).
-    *   Install dependencies (see below). If using Poetry, `poetry install`. If using pip, create a `requirements.txt` from the listed dependencies and `pip install -r requirements.txt`.
+    *   Dependencies are managed with [`uv`](https://docs.astral.sh/uv/), which creates and manages the virtual environment for you.
+    *   Install them with `uv sync`.
 
 2.  **Create WordPress.com Application:**
     *   Go to [WordPress Developer Apps](https://developer.wordpress.com/apps/) and create a new application.
